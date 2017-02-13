@@ -1,0 +1,12 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+.settings/
+.classpath
+.project
+.idea/
+.mvn/
+target/
+*.iml
+mvnw
+mvnw.cmd
+npm-debug.log
+src/main/webapp/images/
