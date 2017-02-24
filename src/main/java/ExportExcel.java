@@ -46,12 +46,20 @@ public class ExportExcel {
         rightAlignStyle = getAlignmentStyle(CellStyle.ALIGN_RIGHT);
     }
 
-    public static XSSFCellStyle getDefaultDateFormat() {
-        XSSFCellStyle dateCellStyle = workbook.createCellStyle();
+    public static XSSFCellStyle getDefaultDateFormat(XSSFCellStyle cellStyle) {
+        XSSFCellStyle dateCellStyle  = (cellStyle != null) ? cellStyle : workbook.createCellStyle();
         CreationHelper createHelper = workbook.getCreationHelper();
         dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/MM/yyyy"));
         dateCellStyle.setAlignment(CellStyle.ALIGN_LEFT);
         return dateCellStyle;
+    }
+
+    public static XSSFCellStyle getDefaultNumberFormat(XSSFCellStyle cellStyle) {
+
+        XSSFCellStyle numberCellStyle = (cellStyle != null) ? cellStyle : workbook.createCellStyle();
+        CreationHelper createHelper = workbook.getCreationHelper();
+        numberCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("0.##"));
+        return numberCellStyle;
     }
 
     public static XSSFCellStyle getBorderStyle() {
@@ -157,6 +165,11 @@ public class ExportExcel {
         Cell cell = row.createCell(COL_NUM++);
         cell.setCellValue("");
 
+        //check for cell have defaultCellStyle
+        if (null != cellStyle) {
+            cell.setCellStyle(cellStyle);
+        }
+
         if (null != value) {
             if (value instanceof String) {
                 String strValue = (String) value;
@@ -165,7 +178,8 @@ public class ExportExcel {
                     //check, value is formula, formula always starts with '='
                     if(strValue.startsWith("=")){
                         cell.setCellType(Cell.CELL_TYPE_FORMULA);
-                        //cell.setCellFormula(strValue.substring(1)); // removes first character "="
+                        cell.setCellFormula(strValue.substring(1)); // removes first character "="
+                        cell.setCellStyle(getDefaultNumberFormat(cellStyle));
                     } else {
                         cell.setCellType(Cell.CELL_TYPE_STRING);
                         cell.setCellValue(strValue);
@@ -182,18 +196,17 @@ public class ExportExcel {
                 }else if (value instanceof Long) {
                     cell.setCellValue((Long) value);
                 }
+                cell.setCellStyle(getDefaultNumberFormat(cellStyle));
+
             } else if (value instanceof Boolean) {
                 cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                 cell.setCellValue((String) value);
             } else if (value instanceof Date) {
                 cell.setCellValue((Date) value);
-                cell.setCellStyle(getDefaultDateFormat());
+                cell.setCellStyle(getDefaultDateFormat(cellStyle));
             }
 
-            //check for cell have defaultCellStyle
-            if (null != cellStyle) {
-                cell.setCellStyle(cellStyle);
-            }
+
         }
         return cell;
 
