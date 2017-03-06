@@ -7,8 +7,7 @@ import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.*;
 import java.awt.Color;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -30,6 +29,8 @@ public class ExportExcel {
 
     //cell/row style config
     public static XSSFCellStyle defaultFontStyle;
+    public static XSSFCellStyle default9FontStyle;
+    public static XSSFCellStyle default10FontStyle;
     //text style config
     public static XSSFCellStyle rightAlignStyle;
 
@@ -39,42 +40,49 @@ public class ExportExcel {
         COL_NUM = 0;
         workbook = new XSSFWorkbook();
         sheet = workbook.createSheet("Sample sheet");
-//        default9FontStyle = getFontStyle(9, Color.DARK_GRAY);
-//        default10FontStyle = getFontStyle(10, Color.DARK_GRAY);
+        default9FontStyle = getFontStyle(9, Color.DARK_GRAY);
+        default10FontStyle = getFontStyle(10, Color.DARK_GRAY);
         defaultFontStyle = getFontStyle(11, Color.DARK_GRAY);
 //        default12FontStyle = getFontStyle(12, Color.DARK_GRAY);
         rightAlignStyle = getAlignmentStyle(CellStyle.ALIGN_RIGHT);
     }
 
     public static XSSFCellStyle getDefaultDateFormat(XSSFCellStyle cellStyle) {
-        XSSFCellStyle dateCellStyle  = (cellStyle != null) ? cellStyle : workbook.createCellStyle();
+        XSSFCellStyle dateCellStyle = (cellStyle != null) ? (XSSFCellStyle) cellStyle.clone() : getWorkbookStyle();
         CreationHelper createHelper = workbook.getCreationHelper();
         dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/MM/yyyy"));
         dateCellStyle.setAlignment(CellStyle.ALIGN_LEFT);
-        return dateCellStyle;
+        return (XSSFCellStyle)dateCellStyle.clone();
     }
 
     public static XSSFCellStyle getDefaultNumberFormat(XSSFCellStyle cellStyle) {
+        return getNumberFormat(cellStyle, "0.00");
+    }
 
-        XSSFCellStyle numberCellStyle = (cellStyle != null) ? cellStyle : workbook.createCellStyle();
+    public static XSSFCellStyle getWholeNumberFormat(XSSFCellStyle cellStyle) {
+        return getNumberFormat(cellStyle, "0");
+    }
+
+    public static XSSFCellStyle getNumberFormat(XSSFCellStyle cellStyle, String format) {
+        XSSFCellStyle numberCellStyle = (cellStyle != null) ? (XSSFCellStyle) cellStyle.clone() : getWorkbookStyle();
         CreationHelper createHelper = workbook.getCreationHelper();
-        numberCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("0.##"));
-        return numberCellStyle;
+        numberCellStyle.setDataFormat(createHelper.createDataFormat().getFormat(format));
+        return (XSSFCellStyle) numberCellStyle.clone();
     }
 
     public static XSSFCellStyle getBorderStyle() {
-        XSSFCellStyle borderStyle = workbook.createCellStyle();
+        XSSFCellStyle borderStyle = getWorkbookStyle();
         borderStyle.setBorderBottom(HSSFCellStyle.BORDER_THIN);
         borderStyle.setBorderTop(HSSFCellStyle.BORDER_THIN);
         borderStyle.setBorderRight(HSSFCellStyle.BORDER_THIN);
         borderStyle.setBorderLeft(HSSFCellStyle.BORDER_THIN);
-        return borderStyle;
+        return (XSSFCellStyle) borderStyle.clone();
     }
 
     public static XSSFCellStyle getAlignmentStyle(short alignIndex) {
-        XSSFCellStyle rightAligned = workbook.createCellStyle();
+        XSSFCellStyle rightAligned = getWorkbookStyle();
         rightAligned.setAlignment(alignIndex);
-        return rightAligned;
+        return (XSSFCellStyle) rightAligned.clone();
     }
 
     public static XSSFCellStyle getFontStyle(int fontSize, Color fontColor) {
@@ -95,14 +103,14 @@ public class ExportExcel {
         font.setColor(new XSSFColor(fontColor));
         font.setBold(isBold);
 
-        XSSFCellStyle fontStyle = workbook.createCellStyle();
+        XSSFCellStyle fontStyle = getWorkbookStyle();
         fontStyle.setFont(font);
         if(null != bgColor){
             fontStyle.setFillForegroundColor(new XSSFColor(bgColor));
             fontStyle.setFillPattern(CellStyle.SOLID_FOREGROUND);
         }
 
-        return fontStyle;
+        return (XSSFCellStyle) fontStyle.clone();
     }
 
     public XSSFWorkbook getWorkbook() {
@@ -189,15 +197,17 @@ public class ExportExcel {
                 cell.setCellType(Cell.CELL_TYPE_NUMERIC);
                 if (value instanceof Integer) {
                     cell.setCellValue((Integer) value);
+                    cell.setCellStyle(getWholeNumberFormat(cellStyle));
                 } else if (value instanceof Float) {
                     cell.setCellValue((Float) value);
+                    cell.setCellStyle(getDefaultNumberFormat(cellStyle));
                 } else if (value instanceof Double) {
                     cell.setCellValue((Double) value);
+                    cell.setCellStyle(getDefaultNumberFormat(cellStyle));
                 }else if (value instanceof Long) {
                     cell.setCellValue((Long) value);
+                    cell.setCellStyle(getWholeNumberFormat(cellStyle));
                 }
-                cell.setCellStyle(getDefaultNumberFormat(cellStyle));
-
             } else if (value instanceof Boolean) {
                 cell.setCellType(Cell.CELL_TYPE_BOOLEAN);
                 cell.setCellValue((String) value);
@@ -217,23 +227,21 @@ public class ExportExcel {
     }
 
     public Cell createCell(Object value, boolean isBold, Row row) {
-
-        Cell cell = createCell(value, null, row);
-
-        XSSFCellStyle cellBoldStyle = (XSSFCellStyle) cell.getCellStyle();
+        XSSFCellStyle cellBoldStyle = getWorkbookStyle();
         if(null != cellBoldStyle) {
-            XSSFFont cellBoldFont = cellBoldStyle.getFont();
+            XSSFFont cellBoldFont = workbook.createFont();
             cellBoldFont.setBold(isBold);
             cellBoldStyle.setFont(cellBoldFont);
             cell.setCellStyle(cellBoldStyle);
         }
+        Cell cell = createCell(value, cellBoldStyle, isBold, row);
         return cell;
     }
 
     public Cell createCell(Object value, XSSFCellStyle cellStyle, boolean isBold, Row row) {
 
         if(null != cellStyle) {
-            XSSFFont cellBoldFont = cellStyle.getFont();
+            XSSFFont cellBoldFont = workbook.createFont();
             cellBoldFont.setBold(isBold);
             cellStyle.setFont(cellBoldFont);
         }
@@ -276,6 +284,10 @@ public class ExportExcel {
 
         }
         return false;
+    }
+
+    public static XSSFCellStyle getWorkbookStyle(){
+        return (XSSFCellStyle)workbook.createCellStyle().clone();
     }
 
     public String getCellAddress(Cell cell){
