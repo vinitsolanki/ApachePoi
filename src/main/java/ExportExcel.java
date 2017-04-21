@@ -150,7 +150,23 @@ public class ExportExcel {
     }
 
     //Added image
-    public static void addImage(int column, int row, String imagePath, double scale, int pictureType) throws IOException {
+    public static void addImage(int column, int row, String imagePath, double scale) throws IOException {
+
+        //if(!StringUtils.hasText(imagePath))
+        if(imagePath != null && !imagePath.trim().equals(""))
+            return;
+
+//        String fileExtenstion = Utils.getFileExtension(Utils.getFileName(imagePath));
+        int pictureType = Workbook.PICTURE_TYPE_JPEG;
+//
+//        //if(StringUtils.hasText(fileExtenstion)){
+//        if(fileExtenstion != null && !fileExtenstion.trim().equals("")){
+//            //add more case if required.
+//            if(fileExtenstion.equalsIgnoreCase("png")){
+//                pictureType = Workbook.PICTURE_TYPE_PNG;
+//            }
+//        }
+
         InputStream inputStream = new FileInputStream(imagePath);
         byte[] bytes = IOUtils.toByteArray(inputStream);
         int pictureIdx = workbook.addPicture(bytes, pictureType);
@@ -232,24 +248,19 @@ public class ExportExcel {
             XSSFFont cellBoldFont = workbook.createFont();
             cellBoldFont.setBold(isBold);
             cellBoldStyle.setFont(cellBoldFont);
-            cell.setCellStyle(cellBoldStyle);
         }
         Cell cell = createCell(value, cellBoldStyle, isBold, row);
         return cell;
     }
 
     public Cell createCell(Object value, XSSFCellStyle cellStyle, boolean isBold, Row row) {
-
         if(null != cellStyle) {
             XSSFFont cellBoldFont = workbook.createFont();
             cellBoldFont.setBold(isBold);
             cellStyle.setFont(cellBoldFont);
         }
-
         Cell cell = createCell(value, cellStyle, row);
-
         return cell;
-
     }
 
     public Cell createCell(Object value, int columnNumber, XSSFCellStyle cellStyle, Row row) {

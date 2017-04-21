@@ -45,7 +45,7 @@ public class ExportExcelTest {
 
             try {
                 //Added image
-                excel.addImage(0, 0, "C:\\ProjectsPerforce\\CM\\web\\images\\logo.png", 1, Workbook.PICTURE_TYPE_PNG);  //TODO : need get logo from properties, // scale = 0.5, Reset the image to the 0.5 scale size
+                excel.addImage(0, 0, "C:\\ProjectsPerforce\\CM\\web\\images\\logo.png", 1);  //TODO : need get logo from properties, // scale = 0.5, Reset the image to the 0.5 scale size
             } catch (IOException e) {
                 lw.error("Export report logo not found while exporting excel report");
             }
